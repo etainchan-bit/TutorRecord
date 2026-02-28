@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TutorRecord | </title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #c4e4f1;
+            --card-bg: #ffffff;
+            --primary-accent: #4b2004;
+            --secondary-accent: #4b2004;
+            --danger-accent: #351602;
+            --text-main: #4b2004;
+            --text-muted: #4b2004;
+            --font-family: 'Inter', sans-serif; 
+        }
+
+        body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
+
+        .nav-bar { 
+            background: #c4e4f1(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05); padding: 15px 25px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 100; 
+        }
+
+        .nav-title { font-weight: 600; font-size: 1.3rem; letter-spacing: -0.5px; color: var(--primary-accent); cursor: pointer; }
+        .nav-btns button { background: none; border: none; font-size: 1.4rem; cursor: pointer; margin-left: 15px; opacity: 0.7; transition: 0.3s; }
+        .nav-btns button:hover { opacity: 1; transform: translateY(-2px); }
+
+        .container { max-width: 500px; margin: 30px auto; padding: 0 20px; }
+        .page { display: none; animation: slideUp 0.4s ease-out; }
+        .page.active { display: block; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { 
+            background: var(--card-bg); padding: 24px; border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03); margin-bottom: 25px; 
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        h2 { font-weight: 600; font-size: 0.9rem; margin-top: 0; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+        label { font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 5px; }
+
+        input, select { 
+            width: 100%; padding: 12px 15px; margin-bottom: 18px; 
+            border: 1px solid #4b2004; border-radius: 12px; 
+            box-sizing: border-box; font-size: 1rem; transition: 0.2s;
+        }
+
+        .flex-row { display: flex; gap: 12px; }
+        .btn-main { 
+            background: var(--primary-accent); color: rgb(255, 244, 244); width: 100%; 
+            border: none; border-radius: 14px; padding: 16px; 
+            font-weight: 600; font-size: 1rem; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); transition: 0.3s;
+        }
+
+        /* Lists and Items */
+        .record-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border-radius: 12px; background: #f9fafb; margin-bottom: 10px;
+        }
+        .stu-list-item { border: 1px solid #f3f4f6; background: #fff; }
+
+        .delete-btn { color: var(--danger-accent); font-weight: bold; cursor: pointer; font-size: 0.9rem; opacity: 0.5; transition: 0.2s; padding: 5px; }
+        .delete-btn:hover { opacity: 1; }
+
+        /* Calendar */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+        .calendar-day { 
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            background: #57240254; border-radius: 10px; cursor: pointer; font-size: 0.85rem; position: relative;
+        }
+        .calendar-day.active { background: var(--primary-accent); color: white; font-weight: 600; }
+        .calendar-day.has-record::after { content: ''; width: 4px; height: 4px; background: var(--secondary-accent); border-radius: 50%; position: absolute; bottom: 4px; }
+
+        .summary-box { background: #4b200446; border: 1px solid #57240254; padding: 20px; border-radius: 15px; margin-top: 15px; color:#4b2004; }
+        .back-btn { background: none; border: 1px solid #e5e7eb; padding: 8px 15px; border-radius: 10px; margin-bottom: 15px; cursor: pointer; color: var(--text-muted); font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="nav-title" onclick="showPage('page-home')">TutorRecord.</div>
+        <div class="nav-btns">
+            <button onclick="showPage('page-calendar')">🗓️</button>
+            <button onclick="showPage('page-settings')">⚙️</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="page-home" class="page active">
+            <div class="card">
+                <h2>Quick Log</h2>
+                <label>Date</label>
+                <input type="date" id="logDate">
+                <label>Student</label>
+                <select id="stuSelect"></select>
+                <label>Duration</label>
+                <div class="flex-row">
+                    <input type="number" id="durHr" placeholder="Hrs" min="0" value="1">
+                    <input type="number" id="durMin" placeholder="Mins" min="0" max="59" value="15">
+                </div>
+                <button class="btn-main" onclick="logSession()">Save Session</button>
+            </div>
+            <div id="quick-history"></div>
+        </div>
+
+        <div id="page-calendar" class="page">
+            <button class="back-btn" onclick="showPage('page-home')">← Back</button>
+            <div class="card">
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer;">◀</button>
+                    <h3 id="calendarTitle" style="margin:0; font-size: 1rem;">January 2026</h3>
+                    <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer;">▶</button>
+                </div>
+                <div class="calendar-grid" id="calendarBody"></div>
+            </div>
+            <div class="card">
+                <h2>Settlement Details</h2>
+                <div id="dayDetail" style="font-size: 0.9rem; color: var(--text-muted);">Select a date to view logs</div>
+                <div id="weekList" style="margin-top:20px; font-size: 0.85rem; border-top: 1px solid #4b2004; padding-top:15px;"></div>
+                <div id="weekTotal" class="summary-box" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div id="page-settings" class="page">
+            <button class="back-btn" onclick="showPage('page-home')">← Back</button>
+            <div class="card">
+                <h2>Add New Student</h2>
+                <label>Student Name</label>
+                <input type="text" id="stuName" placeholder="e.g. Alex">
+                <label>Rate ($ per 75m)</label>
+                <input type="number" id="stuRate" placeholder="Price">
+                <button class="btn-main" onclick="addStudent()">Add Student</button>
+            </div>
+            <div class="card">
+                <h2>Active Students</h2>
+                <div id="stuStatusList"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let students = JSON.parse(localStorage.getItem('tutor_v6_stu')) || {};
+    let logs = JSON.parse(localStorage.getItem('tutor_v6_logs')) || [];
+    let currentViewDate = new Date(2026, 0, 1);
+    let selectedDateStr = new Date().toISOString().split('T')[0];
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        if(pageId === 'page-calendar') renderCalendar();
+        if(pageId === 'page-settings') renderStudentStatus();
+    }
+
+    // --- STUDENT MANAGEMENT ---
+    function addStudent() {
+        const name = document.getElementById('stuName').value.trim();
+        const rate = document.getElementById('stuRate').value;
+        if(!name || !rate) return alert("Please fill in both fields");
+        students[name] = parseFloat(rate);
+        saveAndRefresh();
+        document.getElementById('stuName').value = '';
+        document.getElementById('stuRate').value = '';
+    }
+
+    function removeStudent(name) {
+        if(confirm(`Remove ${name} from active list? Old records will stay.`)) {
+            delete students[name];
+            saveAndRefresh();
+        }
+    }
+
+    function renderStudentStatus() {
+        const list = document.getElementById('stuStatusList');
+        list.innerHTML = Object.keys(students).length ? '' : '<p style="color:var(--text-muted); font-size:0.8rem;">No students added yet.</p>';
+        for(let n in students) {
+            list.innerHTML += `<div class="record-item stu-list-item">
+                <span><strong>${n}</strong> <br><small style="color:var(--text-muted)">$${students[n]}/75m</small></span>
+                <span class="delete-btn" onclick="removeStudent('${n}')">Remove</span>
+            </div>`;
+        }
+    }
+
+    function updateStuDropdown() {
+        const sel = document.getElementById('stuSelect');
+        sel.innerHTML = Object.keys(students).length ? '' : '<option value="">-- Add student first --</option>';
+        for(let n in students) sel.innerHTML += `<option value="${n}">${n}</option>`;
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('tutor_v6_stu', JSON.stringify(students));
+        updateStuDropdown();
+        renderStudentStatus();
+    }
+
+    // --- LOGGING ---
+    function logSession() {
+        const date = document.getElementById('logDate').value;
+        const name = document.getElementById('stuSelect').value;
+        const hr = parseInt(document.getElementById('durHr').value) || 0;
+        const min = parseInt(document.getElementById('durMin').value) || 0;
+        if(!name) return alert("Select a student");
+        
+        const earn = Math.round(((hr * 60 + min) / 75) * students[name]);
+        logs.push({ id: Date.now().toString(), date, name, hr, min, earn });
+        localStorage.setItem('tutor_v6_logs', JSON.stringify(logs));
+        renderQuickHistory();
+        alert("Saved!");
+    }
+
+    function renderQuickHistory() {
+        const container = document.getElementById('quick-history');
+        const recent = logs.slice(-3).reverse();
+        if(!recent.length) return container.innerHTML = "";
+        let html = "<h3 style='font-size:0.75rem; color:var(--text-muted); margin: 0 0 10px 10px;'>RECENT ACTIVITY</h3>";
+        recent.forEach(l => {
+            html += `<div class="record-item" style="background:white; margin-bottom:8px; border: 1px solid rgba(0,0,0,0.02);">
+                <span style="font-size:0.85rem;">${l.date} • ${l.name}</span>
+                <strong style="color:var(--secondary-accent);">$${l.earn}</strong>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // --- CALENDAR & WEEKLY LOGIC ---
+    function renderCalendar() {
+        const year = currentViewDate.getFullYear(), month = currentViewDate.getMonth();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('calendarTitle').innerText = `${monthNames[month]} ${year}`;
+        const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
+        const body = document.getElementById('calendarBody');
+        body.innerHTML = '';
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => body.innerHTML += `<div style="font-weight:600; color:var(--text-muted); font-size:0.7rem;">${d}</div>`);
+        for (let i = 0; i < firstDay; i++) body.innerHTML += `<div></div>`;
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const active = selectedDateStr === dateStr ? 'active' : '';
+            const hasRec = logs.some(l => l.date === dateStr);
+            body.innerHTML += `<div class="calendar-day ${active} ${hasRec?'has-record':''}" onclick="selectDate('${dateStr}')">${d}</div>`;
+        }
+    }
+
+    function selectDate(dateStr) {
+        selectedDateStr = dateStr;
+        renderCalendar();
+        const dayLogs = logs.filter(l => l.date === dateStr);
+        document.getElementById('dayDetail').innerHTML = `<strong>${dateStr}</strong>` + (dayLogs.length ? dayLogs.map(l => `<div class="record-item" style="background:#fff; margin-top:10px;"><span>${l.name}</span> <span>$${l.earn} <span class="delete-btn" onclick="deleteLog('${l.id}')">✕</span></span></div>`).join('') : '<p>No logs.</p>');
+        
+        const curr = new Date(dateStr);
+        let dayNum = curr.getDay() || 7;
+        const mon = new Date(curr); mon.setDate(curr.getDate() - (dayNum - 1));
+        let weekSum = 0, weekHtml = `<h4>Weekly Report</h4>`;
+        for(let i=0; i<7; i++) {
+            let d = new Date(mon); d.setDate(mon.getDate() + i);
+            let dStr = d.toISOString().split('T')[0];
+            let daily = logs.filter(l => l.date === dStr).reduce((s, l) => s + l.earn, 0);
+            weekSum += daily;
+            weekHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:${daily?'#1f2937':'#9ca3af'}"><span>${dStr}</span> <span>$${daily}</span></div>`;
+        }
+        document.getElementById('weekList').innerHTML = weekHtml;
+        const wt = document.getElementById('weekTotal');
+        wt.style.display = "block"; wt.innerHTML = `<strong>Week Total: $${weekSum}</strong>`;
+    }
+
+    function deleteLog(id) {
+        if(confirm("Delete log?")) {
+            logs = logs.filter(l => l.id !== id);
+            localStorage.setItem('tutor_v6_logs', JSON.stringify(logs));
+            selectDate(selectedDateStr);
+            renderQuickHistory();
+        }
+    }
+
+    function changeMonth(step) {
+        currentViewDate.setMonth(currentViewDate.getMonth() + step);
+        renderCalendar();
+    }
+
+    document.getElementById('logDate').value = selectedDateStr;
+    saveAndRefresh();
+    renderQuickHistory();
+</script>
+</body>
+</html>
