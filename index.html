@@ -20,11 +20,22 @@
 
         body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
 
+        /* 新增：頂部強制儲存列 */
+        .save-bar {
+            background: #4b2004; color: #c4e4f1; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1001; font-size: 0.8rem;
+        }
+        .save-bar button {
+            background: #c4e4f1; color: #4b2004; border: none; padding: 5px 12px;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+
         .nav-bar { 
-            background: #c4e4f1(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+            background: rgba(196, 228, 241, 0.8); backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(0,0,0,0.05); padding: 15px 25px; 
             display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 100; 
+            position: sticky; top: 40px; z-index: 100; 
         }
 
         .nav-title { font-weight: 600; font-size: 1.3rem; letter-spacing: -0.5px; color: var(--primary-accent); cursor: pointer; }
@@ -60,7 +71,6 @@
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); transition: 0.3s;
         }
 
-        /* Lists and Items */
         .record-item { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px; border-radius: 12px; background: #f9fafb; margin-bottom: 10px;
@@ -70,7 +80,6 @@
         .delete-btn { color: var(--danger-accent); font-weight: bold; cursor: pointer; font-size: 0.9rem; opacity: 0.5; transition: 0.2s; padding: 5px; }
         .delete-btn:hover { opacity: 1; }
 
-        /* Calendar */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
         .calendar-day { 
             aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
@@ -84,6 +93,11 @@
     </style>
 </head>
 <body>
+
+    <div class="save-bar">
+        <span>TutorRecord System</span>
+        <button class="save-btn-top" onclick="manualSave()">SAVE</button>
+    </div>
 
     <div class="nav-bar">
         <div class="nav-title" onclick="showPage('page-home')">TutorRecord.</div>
@@ -147,10 +161,24 @@
     </div>
 
 <script>
+    // 數據載入
     let students = JSON.parse(localStorage.getItem('tutor_v6_stu')) || {};
     let logs = JSON.parse(localStorage.getItem('tutor_v6_logs')) || [];
     let currentViewDate = new Date(2026, 0, 1);
     let selectedDateStr = new Date().toISOString().split('T')[0];
+
+    // 新增：強制存檔函數
+    function manualSave() {
+        localStorage.setItem('tutor_v6_stu', JSON.stringify(students));
+        localStorage.setItem('tutor_v6_logs', JSON.stringify(logs));
+        alert("All Data Successfully Locked to Phone! ✓");
+    }
+
+    // 當手機瀏覽器關閉或跳轉時自動觸發最後一次儲存
+    window.onbeforeunload = function() {
+        localStorage.setItem('tutor_v6_stu', JSON.stringify(students));
+        localStorage.setItem('tutor_v6_logs', JSON.stringify(logs));
+    };
 
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -159,7 +187,6 @@
         if(pageId === 'page-settings') renderStudentStatus();
     }
 
-    // --- STUDENT MANAGEMENT ---
     function addStudent() {
         const name = document.getElementById('stuName').value.trim();
         const rate = document.getElementById('stuRate').value;
@@ -168,12 +195,15 @@
         saveAndRefresh();
         document.getElementById('stuName').value = '';
         document.getElementById('stuRate').value = '';
+        // 自動存檔
+        localStorage.setItem('tutor_v6_stu', JSON.stringify(students));
     }
 
     function removeStudent(name) {
         if(confirm(`Remove ${name} from active list? Old records will stay.`)) {
             delete students[name];
             saveAndRefresh();
+            localStorage.setItem('tutor_v6_stu', JSON.stringify(students));
         }
     }
 
@@ -200,7 +230,6 @@
         renderStudentStatus();
     }
 
-    // --- LOGGING ---
     function logSession() {
         const date = document.getElementById('logDate').value;
         const name = document.getElementById('stuSelect').value;
@@ -210,9 +239,11 @@
         
         const earn = Math.round(((hr * 60 + min) / 75) * students[name]);
         logs.push({ id: Date.now().toString(), date, name, hr, min, earn });
+        
+        // 關鍵：存檔
         localStorage.setItem('tutor_v6_logs', JSON.stringify(logs));
         renderQuickHistory();
-        alert("Saved!");
+        alert("Session Recorded & Saved!");
     }
 
     function renderQuickHistory() {
@@ -229,7 +260,6 @@
         container.innerHTML = html;
     }
 
-    // --- CALENDAR & WEEKLY LOGIC ---
     function renderCalendar() {
         const year = currentViewDate.getFullYear(), month = currentViewDate.getMonth();
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -251,7 +281,7 @@
         selectedDateStr = dateStr;
         renderCalendar();
         const dayLogs = logs.filter(l => l.date === dateStr);
-        document.getElementById('dayDetail').innerHTML = `<strong>${dateStr}</strong>` + (dayLogs.length ? dayLogs.map(l => `<div class="record-item" style="background:#fff; margin-top:10px;"><span>${l.name}</span> <span>$${l.earn} <span class="delete-btn" onclick="deleteLog('${l.id}')">✕</span></span></div>`).join('') : '<p>No logs.</p>');
+        document.getElementById('dayDetail').innerHTML = `<strong>${dateStr}</strong>` + (dayLogs.length ? dayLogs.map(l => `<div class="record-item"><span>${l.name}</span> <span>$${l.earn} <span class="delete-btn" onclick="deleteLog('${l.id}')">✕</span></span></div>`).join('') : '<p>No logs.</p>');
         
         const curr = new Date(dateStr);
         let dayNum = curr.getDay() || 7;
@@ -288,5 +318,4 @@
     renderQuickHistory();
 </script>
 </body>
-
 </html>
